@@ -35,19 +35,19 @@ class RequireBlock(Block):
     it will send the response if one is given. Multiple role or channel
     requirements can be given, and should be split by a ",".
 
-    **Usage:** ``{require(<role,channel>):[response]}``
+    **Usage:** ``{require([response]):<role,channel>}``
 
     **Aliases:** ``whitelist``
 
-    **Payload:** response, None
+    **Payload:** role, channel
 
-    **Parameter:** role, channel
+    **Parameter:** response, None
 
     **Examples:** ::
 
-        {require(Moderator)}
-        {require(#general, #bot-cmds):This tag can only be run in #general and #bot-cmds.}
-        {require(757425366209134764, 668713062186090506, 737961895356792882):You aren't allowed to use this tag.}
+        {require:Moderator}
+        {require(This tag can only be run in #general and #bot-cmds.):#general, #bot-cmds}
+        {require(You aren't allowed to use this tag.):757425366209134764, 668713062186090506, 737961895356792882}
     """
 
     def will_accept(self, ctx: Interpreter.Context) -> bool:
@@ -55,14 +55,14 @@ class RequireBlock(Block):
         return any([dec == "require", dec == "whitelist"])
 
     def process(self, ctx: Interpreter.Context) -> Optional[str]:
-        if not ctx.verb.parameter:
+        if not ctx.verb.payload:
             return None
         actions = ctx.response.actions.get("requires")
         if actions:
             return None
         ctx.response.actions["requires"] = {
-            "items": [i.strip() for i in ctx.verb.parameter.split(",")],
-            "response": ctx.verb.payload,
+            "items": [i.strip() for i in ctx.verb.payload.split(",")],
+            "response": ctx.verb.parameter,
         }
         return ""
 
@@ -75,17 +75,17 @@ class BlacklistBlock(Block):
     it will send the response if one is given. Multiple role or channel
     requirements can be given, and should be split by a ",".
 
-    **Usage:** ``{blacklist(<role,channel>):[response]}``
+    **Usage:** ``{blacklist([response]):<role,channel>}``
 
-    **Payload:** response, None
+    **Payload:** role, channel
 
-    **Parameter:** role, channel
+    **Parameter:** response, None
 
     **Examples:** ::
 
-        {blacklist(Muted)}
-        {blacklist(#support):This tag is not allowed in #support.}
-        {blacklist(Tag Blacklist, 668713062186090506):You are blacklisted from using tags.}
+        {blacklist:Muted}
+        {blacklist(This tag is not allowed in #support.):#support}
+        {blacklist(You are blacklisted from using tags.):Tag Blacklist, 668713062186090506}
     """
 
     def will_accept(self, ctx: Interpreter.Context) -> bool:
@@ -99,7 +99,7 @@ class BlacklistBlock(Block):
         if actions:
             return None
         ctx.response.actions["blacklist"] = {
-            "items": [i.strip() for i in ctx.verb.parameter.split(",")],
-            "response": ctx.verb.payload,
+            "items": [i.strip() for i in ctx.verb.payload.split(",")],
+            "response": ctx.verb.parameter,
         }
         return ""
