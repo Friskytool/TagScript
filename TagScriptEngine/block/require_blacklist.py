@@ -57,8 +57,7 @@ class RequireBlock(Block):
     def process(self, ctx: Interpreter.Context) -> Optional[str]:
         if not ctx.verb.payload:
             return None
-        actions = ctx.response.actions.get("requires")
-        if actions:
+        if actions := ctx.response.actions.get("requires"):
             return None
         ctx.response.actions["requires"] = {
             "items": [i.strip() for i in ctx.verb.payload.split(",")],
@@ -95,8 +94,7 @@ class BlacklistBlock(Block):
     def process(self, ctx: Interpreter.Context) -> Optional[str]:
         if not ctx.verb.parameter:
             return None
-        actions = ctx.response.actions.get("blacklist")
-        if actions:
+        if actions := ctx.response.actions.get("blacklist"):
             return None
         ctx.response.actions["blacklist"] = {
             "items": [i.strip() for i in ctx.verb.payload.split(",")],

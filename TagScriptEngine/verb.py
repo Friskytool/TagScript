@@ -35,8 +35,7 @@ class Verb:
             elif v == ")" and self.dec_depth:
                 if self.close_parameter(i):
                     return
-        else:
-            self.set_payload()
+        self.set_payload()
 
     def __str__(self):
         """This makes Verb compatible with str(x)"""
@@ -44,9 +43,9 @@ class Verb:
         if self.declaration != None:
             response += self.declaration
         if self.parameter != None:
-            response += "(" + self.parameter + ")"
+            response += f"({self.parameter})"
         if self.payload != None:
-            response += ":" + self.payload
+            response += f":{self.payload}"
         return response + "}"
 
     def __repr__(self):

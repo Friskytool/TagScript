@@ -10,15 +10,9 @@ def parse_into_output(payload, result):
     try:
         output = helper_split(payload, False)
         if output != None and len(output) == 2:
-            if result:
-                return output[0]
-            else:
-                return output[1]
+            return output[0] if result else output[1]
         else:
-            if result:
-                return payload
-            else:
-                return ""
+            return payload if result else ""
     except:
         return None
 

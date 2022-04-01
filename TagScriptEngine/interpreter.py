@@ -11,7 +11,7 @@ class Node:
         self.coordinates: Tuple[int, int] = coordinates
 
     def __str__(self):
-        return str(self.verb) + " at " + str(self.coordinates)
+        return f'{str(self.verb)} at {str(self.coordinates)}'
 
     def __repr__(self):
         return "<Node verb={0.verb!r} coordinates={0.coordinates!r}>".format(self)
