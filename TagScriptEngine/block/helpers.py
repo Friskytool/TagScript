@@ -50,10 +50,11 @@ def helper_split(split_string: str, easy: bool = True):
     """
     if "|" in split_string:
         return SPLIT_REGEX.split(split_string)
-    if easy and "~" in split_string:
-        return split_string.split("~")
-    if easy and "," in split_string:
-        return split_string.split(",")
+    if easy:
+        if "~" in split_string:
+            return split_string.split("~")
+        if "," in split_string:
+            return split_string.split(",")
     return None
 
 

@@ -5,7 +5,7 @@ from ..utils import escape_content
 
 class StringAdapter(Adapter):
     def __init__(self, string: str, *, escape: bool = False):
-        self.string: str = str(string)
+        self.string: str = string
         self.escape_content = escape
 
     def __repr__(self):

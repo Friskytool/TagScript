@@ -11,15 +11,12 @@ class SubstringBlock(Block):
     def process(self, ctx: Interpreter.Context) -> Optional[str]:
         try:
 
-            if "-" in ctx.verb.parameter:
-                spl = ctx.verb.parameter.split("-")
-                start = int(float(spl[0]))
-                end = int(float(spl[1]))
+            if "-" not in ctx.verb.parameter:
+                return ctx.verb.payload[int(float(ctx.verb.parameter)):]
+            spl = ctx.verb.parameter.split("-")
+            start = int(float(spl[0]))
+            end = int(float(spl[1]))
 
-                return ctx.verb.payload[start:end]
-            else:
-                start = int(float(ctx.verb.parameter))
-
-                return ctx.verb.payload[start:]
+            return ctx.verb.payload[start:end]
         except:
             return None

@@ -122,7 +122,7 @@ class EmbedBlock(Block):
 
     @staticmethod
     def update_embed(embed: Embed, attribute: str, value: str) -> Embed:
-        if attribute in ("color", "colour"):
+        if attribute in {"color", "colour"}:
             value = string_to_color(value)
         setattr(embed, attribute, value)
         return embed

@@ -46,10 +46,10 @@ class NumericStringParser(object):
         point = Literal(".")
         e = CaselessLiteral("E")
         fnumber = Combine(
-            Word("+-" + nums, nums)
-            + Optional(point + Optional(Word(nums)))
-            + Optional(e + Word("+-" + nums, nums))
+            (Word(f"+-{nums}", nums) + Optional(point + Optional(Word(nums))))
+            + Optional(e + Word(f"+-{nums}", nums))
         )
+
         ident = Word(alphas, alphas + nums + "_$")
         mod = Literal("%")
         plus = Literal("+")
