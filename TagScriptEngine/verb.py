@@ -97,17 +97,23 @@ class Verb:
                 # if v == ":" and not dec_depth:
                 self.set_payload()
                 return
-            elif parse_parameter(i, v):
-                return
-        else:
-            self.set_payload()
+            elif v == "(":
+                self.open_parameter(i)
+            elif v == ")" and self.dec_depth:
+                if self.close_parameter(i):
+                    return
+        self.set_payload()
 
-    def _parse_paranthesis_parameter(self, i: int, v: str) -> bool:
-        if v == "(":
-            self.open_parameter(i)
-        elif v == ")" and self.dec_depth:
-            return self.close_parameter(i)
-        return False
+    def __str__(self):
+        """This makes Verb compatible with str(x)"""
+        response = "{"
+        if self.declaration != None:
+            response += self.declaration
+        if self.parameter != None:
+            response += f"({self.parameter})"
+        if self.payload != None:
+            response += f":{self.payload}"
+        return response + "}"
 
     def _parse_dot_parameter(self, i: int, v: str) -> bool:
         if v == ".":
@@ -131,10 +137,10 @@ class Verb:
     def close_parameter(self, i: int) -> bool:
         self.dec_depth -= 1
         if self.dec_depth == 0:
-            self.parameter = self.parsed_string[self.dec_start + 1 : i]
+            self.parameter = self.parsed_string[self.dec_start + 1: i]
             try:
                 if self.parsed_string[i + 1] == ":":
-                    self.payload = self.parsed_string[i + 2 :]
+                    self.payload = self.parsed_string[i + 2:]
             except IndexError:
                 pass
             return True

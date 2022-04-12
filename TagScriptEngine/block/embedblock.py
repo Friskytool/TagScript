@@ -173,13 +173,11 @@ class EmbedBlock(Block):
                 embed.color = color
             return embed
 
-    @classmethod
-    def update_embed(cls, embed: Embed, attribute: str, value: str) -> Embed:
-        handler = cls.ATTRIBUTE_HANDLERS[attribute]
-        try:
-            handler(embed, attribute, value)
-        except Exception as error:
-            raise EmbedParseError(error) from error
+    @staticmethod
+    def update_embed(embed: Embed, attribute: str, value: str) -> Embed:
+        if attribute in {"color", "colour"}:
+            value = string_to_color(value)
+        setattr(embed, attribute, value)
         return embed
 
     @staticmethod
