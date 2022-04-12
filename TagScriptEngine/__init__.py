@@ -1,9 +1,60 @@
-from .verb import Verb
-from .exceptions import *
-from .interpreter import Interpreter, build_node_tree
-from .interface import Block, Adapter
+from collections import namedtuple
+
 from .adapter import *
 from .block import *
-from .utils import escape_content
+from .exceptions import *
+from .interface import *
+from .interpreter import *
+from .utils import *
+from .verb import Verb
 
-__version__ = "2.5.2"
+__version__ = "2.6.2"
+
+
+# github co-pilot automatically wrote the documentation for this and I decided to keep it
+class VersionInfo(namedtuple("VersionInfo", "major minor micro")):
+    """
+    Version information.
+
+    Attributes
+    ----------
+    major: int
+        Major version number.
+    minor: int
+        Minor version number.
+    micro: int
+        Micro version number.
+    """
+
+    __slots__ = ()
+
+    def __str__(self):
+        """
+        Returns a string representation of the version information.
+
+        Returns
+        -------
+        str
+            String representation of the version information.
+        """
+        return "{major}.{minor}.{micro}".format(**self._asdict())
+
+    @classmethod
+    def from_str(cls, version):
+        """
+        Returns a VersionInfo instance from a string.
+
+        Parameters
+        ----------
+        version: str
+            String representation of the version information.
+
+        Returns
+        -------
+        VersionInfo
+            Version information.
+        """
+        return cls(*map(int, version.split(".")))
+
+
+version_info = VersionInfo.from_str(__version__)

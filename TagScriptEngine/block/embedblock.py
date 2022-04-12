@@ -1,24 +1,16 @@
-from typing import Optional
 import json
-from .. import Interpreter
-from ..interface import Block
-from discord import Colour, Embed
 from inspect import ismethod
+from typing import Optional, Union
+
+from discord import Colour, Embed
+
+from ..exceptions import BadColourArgument, EmbedParseError
+from ..interface import Block
+from ..interpreter import Context
+from .helpers import helper_split, implicit_bool
 
 
-class EmbedParseError(Exception):
-    """Raised if an exception occurs while attempting to parse an embed."""
-
-
-class BadColourArgument(EmbedParseError):
-    """Exception raised when the colour is not valid."""
-
-    def __init__(self, argument):
-        self.argument = argument
-        super().__init__(f'Colour "{argument}" is invalid.')
-
-
-def string_to_color(argument: str):
+def string_to_color(argument: str) -> Colour:
     arg = argument.replace("0x", "").lower()
 
     if arg[0] == "#":
@@ -34,6 +26,33 @@ def string_to_color(argument: str):
         if arg.startswith("from_") or method is None or not ismethod(method):
             raise BadColourArgument(arg)
         return method()
+
+
+def set_color(embed: Embed, attribute: str, value: str):
+    value = string_to_color(value)
+    setattr(embed, attribute, value)
+
+
+def set_dynamic_url(embed: Embed, attribute: str, value: str):
+    method = getattr(embed, f"set_{attribute}")
+    method(url=value)
+
+
+def add_field(embed: Embed, _: str, payload: str):
+    try:
+        name, value, _inline = helper_split(payload, 3)
+        inline = implicit_bool(_inline)
+        if inline is None:
+            raise EmbedParseError(
+                f"`inline` argument for `add_field` is not a boolean value (_inline)"
+            )
+    except ValueError:
+        try:
+            name, value = helper_split(payload, 2)
+        except ValueError as exc:
+            raise EmbedParseError("`add_field` payload was not split by |") from exc
+        inline = False
+    embed.add_field(name=name, value=value, inline=inline)
 
 
 class EmbedBlock(Block):
@@ -67,9 +86,19 @@ class EmbedBlock(Block):
     **Manual**
 
     The following embed attributes can be set manually:
+
     *   ``title``
     *   ``description``
     *   ``color``
+    *   ``url``
+    *   ``thumbnail``
+    *   ``image``
+    *   ``field`` - (See below)
+
+    Adding a field to an embed requires the payload to be split by ``|``, into
+    either 2 or 3 parts. The first part is the name of the field, the second is
+    the text of the field, and the third optionally specifies whether the field
+    should be inline.
 
     **Usage:** ``{embed(<attribute>):<value>}``
 
@@ -80,8 +109,9 @@ class EmbedBlock(Block):
     **Examples:** ::
 
         {embed(color):#37b2cb}
-        {embed(title):Support Guide}
-        {embed(description):i like pizza}
+        {embed(title):Rules}
+        {embed(description):Follow these rules to ensure a good experience in our server!}
+        {embed(field):Rule 1|Respect everyone you speak to.|false}
 
     Both methods can be combined to create an embed in a tag.
     The following tagscript uses JSON to create an embed with fields and later
@@ -93,31 +123,54 @@ class EmbedBlock(Block):
         {embed(title):my embed title}
     """
 
-    ALLOWED_ATTRIBUTES = ("description", "title", "color", "colour")
+    ACCEPTED_NAMES = ("embed",)
 
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return dec == "embed"
+    ATTRIBUTE_HANDLERS = {
+        "description": setattr,
+        "title": setattr,
+        "color": set_color,
+        "colour": set_color,
+        "url": setattr,
+        "thumbnail": set_dynamic_url,
+        "image": set_dynamic_url,
+        "field": add_field,
+    }
 
     @staticmethod
-    def get_embed(ctx: Interpreter.Context) -> Embed:
+    def get_embed(ctx: Context) -> Embed:
         return ctx.response.actions.get("embed", Embed())
 
     @staticmethod
-    def text_to_embed(text: str) -> Embed:
+    def value_to_color(value: Optional[Union[int, str]]) -> Colour:
+        if value is None or isinstance(value, Colour):
+            return value
+        if isinstance(value, int):
+            return Colour(value)
+        elif isinstance(value, str):
+            return string_to_color(value)
+        else:
+            raise EmbedParseError("Received invalid type for color key (expected string or int)")
+
+    def text_to_embed(self, text: str) -> Embed:
         try:
             data = json.loads(text)
         except json.decoder.JSONDecodeError as error:
-            raise EmbedParseError from error
+            raise EmbedParseError(error) from error
+
         if data.get("embed"):
             data = data["embed"]
         if data.get("timestamp"):
             data["timestamp"] = data["timestamp"].strip("Z")
+
+        color = data.pop("color", data.pop("colour", None))
+
         try:
             embed = Embed.from_dict(data)
         except Exception as error:
-            raise EmbedParseError from error
+            raise EmbedParseError(error) from error
         else:
+            if color := self.value_to_color(color):
+                embed.color = color
             return embed
 
     @staticmethod
@@ -127,24 +180,12 @@ class EmbedBlock(Block):
         setattr(embed, attribute, value)
         return embed
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
-        lowered = ctx.verb.parameter.lower()
-        if not ctx.verb.parameter:
-            embed = self.get_embed(ctx)
-        elif ctx.verb.parameter.startswith("{") and ctx.verb.parameter.endswith("}"):
-            try:
-                embed = self.text_to_embed(ctx.verb.parameter)
-            except EmbedParseError as error:
-                return str(error)
-        elif lowered in self.ALLOWED_ATTRIBUTES and ctx.verb.payload:
-            embed = self.get_embed(ctx)
-            try:
-                embed = self.update_embed(embed, lowered, ctx.verb.payload)
-            except EmbedParseError as error:
-                return str(error)
-        else:
-            return
+    @staticmethod
+    def return_error(error: Exception) -> str:
+        return f"Embed Parse Error: {error}"
 
+    @staticmethod
+    def return_embed(ctx: Context, embed: Embed) -> str:
         try:
             length = len(embed)
         except Exception as error:
@@ -153,3 +194,21 @@ class EmbedBlock(Block):
             return f"`MAX EMBED LENGTH REACHED ({length}/6000)`"
         ctx.response.actions["embed"] = embed
         return ""
+
+    def process(self, ctx: Context) -> Optional[str]:
+        if not ctx.verb.parameter:
+            return self.return_embed(ctx, self.get_embed(ctx))
+
+        lowered = ctx.verb.parameter.lower()
+        try:
+            if ctx.verb.parameter.startswith("{") and ctx.verb.parameter.endswith("}"):
+                embed = self.text_to_embed(ctx.verb.parameter)
+            elif lowered in self.ATTRIBUTE_HANDLERS and ctx.verb.payload:
+                embed = self.get_embed(ctx)
+                embed = self.update_embed(embed, lowered, ctx.verb.payload)
+            else:
+                return
+        except EmbedParseError as error:
+            return self.return_error(error)
+
+        return self.return_embed(ctx, embed)

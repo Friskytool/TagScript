@@ -1,15 +1,40 @@
-from .. import Interpreter, adapter
-from ..interface import Block
-from typing import Optional
 import random
+from typing import Optional
+
+from ..interface import verb_required_block
+from ..interpreter import Context
 
 
-class RangeBlock(Block):
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return any([dec == "rangef", dec == "range"])
+class RangeBlock(verb_required_block(True, payload=True)):
+    """
+    The range block picks a random number from a range of numbers seperated by ``-``.
+    The number range is inclusive, so it can pick the starting/ending number as well.
+    Using the rangef block will pick a number to the tenth decimal place.
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
+    An optional seed can be provided to the parameter to always choose the same item when using that seed.
+
+    **Usage:** ``{range([seed]):<lowest-highest>}``
+
+    **Aliases:** ``rangef``
+
+    **Payload:** number
+
+    **Parameter:** seed, None
+
+    **Examples:** ::
+
+        Your lucky number is {range:10-30}!
+        # Your lucky number is 14!
+        # Your lucky number is 25!
+
+        {=(height):{rangef:5-7}}
+        I am guessing your height is {height}ft.
+        # I am guessing your height is 5.3ft.
+    """
+
+    ACCEPTED_NAMES = ("rangef", "range")
+
+    def process(self, ctx: Context) -> Optional[str]:
         try:
             spl = ctx.verb.payload.split("-")
             random.seed(ctx.verb.parameter)

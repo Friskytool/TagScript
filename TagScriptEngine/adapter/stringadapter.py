@@ -1,9 +1,11 @@
-from .. import Verb
 from ..interface import Adapter
 from ..utils import escape_content
+from ..verb import Verb
 
 
 class StringAdapter(Adapter):
+    __slots__ = ("string", "escape_content")
+
     def __init__(self, string: str, *, escape: bool = False):
         self.string: str = string
         self.escape_content = escape
@@ -26,7 +28,7 @@ class StringAdapter(Adapter):
                 index = int(ctx.parameter.replace("+", "")) - 1
                 splitter = " " if ctx.payload is None else ctx.payload
                 if ctx.parameter.startswith("+"):
-                    return splitter.join(self.string.split(splitter)[:index+1])
+                    return splitter.join(self.string.split(splitter)[: index + 1])
                 elif ctx.parameter.endswith("+"):
                     return splitter.join(self.string.split(splitter)[index:])
                 else:

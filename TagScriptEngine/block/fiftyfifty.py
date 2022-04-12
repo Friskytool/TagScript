@@ -1,15 +1,29 @@
-from .. import Interpreter, adapter
-from ..interface import Block
-from typing import Optional
 import random
+from typing import Optional
+
+from ..interface import verb_required_block
+from ..interpreter import Context
 
 
-class FiftyFiftyBlock(Block):
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return any([dec == "5050", dec == "50", dec == "?"])
+class FiftyFiftyBlock(verb_required_block(True, payload=True)):
+    """
+    The fifty-fifty block has a 50% change of returning the payload, and 50% chance of returning null.
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
-        if ctx.verb.payload is None:
-            return None
+    **Usage:**  ``{50:<message>}``
+
+    **Aliases:**  ``5050, ?``
+
+    **Payload:**  message
+
+    **Parameter:**  None
+
+    **Examples:**  ::
+
+        I pick {if({5050:.}!=):heads|tails}
+        # I pick heads
+    """
+
+    ACCEPTED_NAMES = ("5050", "50", "?")
+
+    def process(self, ctx: Context) -> Optional[str]:
         return random.choice(["", ctx.verb.payload])

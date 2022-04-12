@@ -1,33 +1,10 @@
-"""
-MIT License
-
-Copyright (c) 2020-2021 phenom4n4n
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from typing import Optional
 
-from TagScriptEngine import Interpreter, Block
+from ..interface import verb_required_block
+from ..interpreter import Context
 
 
-class RequireBlock(Block):
+class RequireBlock(verb_required_block(True, parameter=True)):
     """
     The require block will attempt to convert the given parameter into a channel
     or role, using name or ID. If the user running the tag is not in the targeted
@@ -50,14 +27,11 @@ class RequireBlock(Block):
         {require(You aren't allowed to use this tag.):757425366209134764, 668713062186090506, 737961895356792882}
     """
 
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return any([dec == "require", dec == "whitelist"])
+    ACCEPTED_NAMES = ("require", "whitelist")
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
-        if not ctx.verb.payload:
-            return None
-        if actions := ctx.response.actions.get("requires"):
+    def process(self, ctx: Context) -> Optional[str]:
+        actions = ctx.response.actions.get("requires")
+        if actions:
             return None
         ctx.response.actions["requires"] = {
             "items": [i.strip() for i in ctx.verb.payload.split(",")],
@@ -66,7 +40,7 @@ class RequireBlock(Block):
         return ""
 
 
-class BlacklistBlock(Block):
+class BlacklistBlock(verb_required_block(True, parameter=True)):
     """
     The blacklist block will attempt to convert the given parameter into a channel
     or role, using name or ID. If the user running the tag is in the targeted
@@ -87,9 +61,7 @@ class BlacklistBlock(Block):
         {blacklist(You are blacklisted from using tags.):Tag Blacklist, 668713062186090506}
     """
 
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return dec == "blacklist"
+    ACCEPTED_NAMES = ("blacklist",)
 
     def process(self, ctx: Interpreter.Context) -> Optional[str]:
         if not ctx.verb.parameter:

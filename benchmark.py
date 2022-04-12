@@ -1,5 +1,6 @@
 import time
-from TagScriptEngine import Verb, Interpreter, block, adapter
+
+from TagScriptEngine import Interpreter, adapter, block
 
 blocks = [
     block.MathBlock(),

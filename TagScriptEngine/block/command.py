@@ -1,33 +1,10 @@
-"""
-MIT License
-
-Copyright (c) 2020-2021 phenom4n4n
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from typing import Optional
 
-from TagScriptEngine import Interpreter, Block
+from ..interface import Block, verb_required_block
+from ..interpreter import Context
 
 
-class CommandBlock(Block):
+class CommandBlock(verb_required_block(True, payload=True)):
     """
     Run a command as if the tag invoker had ran it. Only 3 command
     blocks can be used in a tag.
@@ -49,17 +26,18 @@ class CommandBlock(Block):
         # invokes ban command on the pinged user with the reason as "Chatflood/spam"
     """
 
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return any([dec == "c", dec == "com", dec == "command"])
+    ACCEPTED_NAMES = ("c", "com", "command")
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
-        if not ctx.verb.payload:
-            return None
+    def __init__(self, limit: int = 3):
+        self.limit = limit
+        super().__init__()
+
+    def process(self, ctx: Context) -> Optional[str]:
         command = ctx.verb.payload.strip()
-        if actions := ctx.response.actions.get("commands"):
-            if len(actions) >= 3:
-                return "`COMMAND LIMIT REACHED (3)`"
+        actions = ctx.response.actions.get("commands")
+        if actions:
+            if len(actions) >= self.limit:
+                return f"`COMMAND LIMIT REACHED ({self.limit})`"
         else:
             ctx.response.actions["commands"] = []
         ctx.response.actions["commands"].append(command)
@@ -70,7 +48,7 @@ class OverrideBlock(Block):
     """
     Override a command's permission requirements. This can override
     mod, admin, or general user permission requirements when running commands
-    with the :ref:`CommandBlock`. Passing no parameter will default to overriding
+    with the :ref:`Command Block`. Passing no parameter will default to overriding
     all permissions.
 
     In order to add a tag with the override block, the tag author must have ``Manage
@@ -97,14 +75,13 @@ class OverrideBlock(Block):
         # overrides commands that require the mod role or have user permission requirements
     """
 
-    def will_accept(self, ctx: Interpreter.Context) -> bool:
-        dec = ctx.verb.declaration.lower()
-        return dec == "override"
+    ACCEPTED_NAMES = ("override",)
 
-    def process(self, ctx: Interpreter.Context) -> Optional[str]:
+    def process(self, ctx: Context) -> Optional[str]:
         param = ctx.verb.parameter
         if not param:
-            ctx.response.actions["overrides"] = {"admin": True, "mod": True, "permissions": True}
+            ctx.response.actions["overrides"] = {
+                "admin": True, "mod": True, "permissions": True}
             return ""
 
         param = param.strip().lower()

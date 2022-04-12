@@ -1,35 +1,63 @@
 from random import choice
 
-from TagScriptEngine import Verb, Adapter
-from discord import Member, TextChannel, Guild
+from discord import TextChannel
 
+from ..interface import Adapter
 from ..utils import escape_content
+from ..verb import Verb
+
+__all__ = (
+    "AttributeAdapter",
+    "MemberAdapter",
+    "ChannelAdapter",
+    "GuildAdapter",
+)
 
 
 class AttributeAdapter(Adapter):
+    __slots__ = ("object", "_attributes", "_methods")
+
     def __init__(self, base):
         self.object = base
-        self.attributes = {
+        self._attributes = {
             "id": base.id,
             "created_at": base.created_at,
             "timestamp": int(base.created_at.timestamp()),
             "name": getattr(base, "name", str(base)),
         }
+        self._methods = {}
         self.update_attributes()
+        self.update_methods()
 
     def __repr__(self):
-        return f"<{type(self).__qualname__} object={repr(self.object)}>"
+        return f"<{type(self).__qualname__} object={self.object!r}>"
 
     def update_attributes(self):
         pass
 
+    def update_methods(self):
+        pass
+
     def get_value(self, ctx: Verb) -> str:
+        should_escape = False
+
         if ctx.parameter is None:
             return_value = str(self.object)
         else:
-            param = self.attributes.get(ctx.parameter)
-            return_value = str(param) if param is not None else None
-        return escape_content(return_value) if return_value is not None else None
+            try:
+                value = self._attributes[ctx.parameter]
+            except KeyError:
+                if method := self._methods.get(ctx.parameter):
+                    value = method()
+                else:
+                    return
+
+            if isinstance(value, tuple):
+                value, should_escape = value
+
+            return_value = str(value) if value is not None else None
+
+        return escape_content(return_value) if should_escape else return_value
 
 
 class MemberAdapter(AttributeAdapter):
@@ -46,8 +74,8 @@ class MemberAdapter(AttributeAdapter):
 
     **Parameter:** attribute, None
 
-    **Attributes:**
-
+    Attributes
+    ----------
     id
         The author's Discord ID.
     name
@@ -68,18 +96,29 @@ class MemberAdapter(AttributeAdapter):
         A formatted text that pings the author.
     bot
         Whether or not the author is a bot.
+    color
+        The author's top role's color as a hex code.
+    top_role
+        The author's top role.
+    roleids
+        A list of the author's role IDs, split by spaces.
     """
 
     def update_attributes(self):
         additional_attributes = {
+            "color": self.object.color,
+            "colour": self.object.color,
             "nick": self.object.display_name,
-            "avatar": self.object.avatar_url,
+            "avatar": (self.object.avatar_url, False),
             "discriminator": self.object.discriminator,
             "joined_at": getattr(self.object, "joined_at", self.object.created_at),
             "mention": self.object.mention,
             "bot": self.object.bot,
+            "top_role": getattr(self.object, "top_role", None),
         }
-        self.attributes.update(additional_attributes)
+        if roleids := getattr(self.object, "_roles", None):
+            additional_attributes["roleids"] = " ".join(str(r) for r in roleids)
+        self._attributes.update(additional_attributes)
 
 
 class ChannelAdapter(AttributeAdapter):
@@ -94,8 +133,8 @@ class ChannelAdapter(AttributeAdapter):
 
     **Parameter:** attribute, None
 
-    **Attributes:**
-
+    Attributes
+    ----------
     id
         The channel's ID.
     name
@@ -119,7 +158,7 @@ class ChannelAdapter(AttributeAdapter):
                 "mention": self.object.mention,
                 "topic": self.object.topic or None,
             }
-            self.attributes.update(additional_attributes)
+            self._attributes.update(additional_attributes)
 
 
 class GuildAdapter(AttributeAdapter):
@@ -136,8 +175,8 @@ class GuildAdapter(AttributeAdapter):
 
     **Parameter:** attribute, None
 
-    **Attributes:**
-
+    Attributes
+    ----------
     id
         The server's ID.
     name
@@ -169,12 +208,20 @@ class GuildAdapter(AttributeAdapter):
                 bots += 1
             else:
                 humans += 1
+        member_count = guild.member_count
         additional_attributes = {
-            "icon": guild.icon_url,
-            "member_count": guild.member_count,
+            "icon": (guild.icon_url, False),
+            "member_count": member_count,
+            "members": member_count,
             "bots": bots,
             "humans": humans,
             "description": guild.description or "No description.",
-            "random": choice(guild.members),
         }
-        self.attributes.update(additional_attributes)
+        self._attributes.update(additional_attributes)
+
+    def update_methods(self):
+        additional_methods = {"random": self.random_member}
+        self._methods.update(additional_methods)
+
+    def random_member(self):
+        return choice(self.object.members)

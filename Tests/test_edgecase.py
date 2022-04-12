@@ -1,4 +1,3 @@
-from ..TagScriptEngine import Verb, Interpreter, adapter, block, interface, WorkloadExceededError
 import unittest
 
 # Required third party blocks.
@@ -53,8 +52,8 @@ class TestEdgeCases(unittest.TestCase):
             block.ShortCutRedirectBlock("message"),
             block.LooseVariableGetterBlock(),
             block.SubstringBlock(),
-            PythonBlock(),
-            ReplaceBlock(),
+            block.PythonBlock(),
+            block.ReplaceBlock(),
         ]
         self.engine = Interpreter(self.blocks)
 
@@ -189,4 +188,4 @@ class TestEdgeCases(unittest.TestCase):
         {recursion}
 """
 
-            self.engine.process(script, data, 2000)
+            self.engine.process(script, data, charlimit=2000)

@@ -1,10 +1,12 @@
 from inspect import ismethod
 
-from .. import Verb
 from ..interface import Adapter
+from ..verb import Verb
 
 
 class SafeObjectAdapter(Adapter):
+    __slots__ = ("object",)
+
     def __init__(self, base):
         self.object = base
 

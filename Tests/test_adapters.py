@@ -1,5 +1,6 @@
-from ..TagScriptEngine import Verb, Interpreter, adapter, block
 import unittest
+
+from TagScriptEngine import Interpreter, adapter, block
 
 
 def dummy_function():

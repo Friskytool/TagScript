@@ -1,15 +1,3 @@
-from distutils.core import setup
+from setuptools import setup
 
-setup(
-    name="TagScriptEngine",
-    url="https://github.com/JonSnowbd/TagScript/tree/v2",
-    author="PySnow",
-    author_email="vasti009@gmail.com",
-    version="2.5.2",
-    packages=[
-        "TagScriptEngine",
-        "TagScriptEngine.adapter",
-        "TagScriptEngine.block",
-        "TagScriptEngine.interface",
-    ],
-)
+setup()
