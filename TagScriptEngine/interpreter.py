@@ -45,7 +45,7 @@ class Node:
         self.coordinates = coordinates
 
     def __str__(self):
-        return str(self.verb) + " at " + str(self.coordinates)
+        return f"{str(self.verb)} at {str(self.coordinates)}"
 
     def __repr__(self):
         return f"<Node verb={self.verb!r} coordinates={self.coordinates!r} output={self.output!r}>"

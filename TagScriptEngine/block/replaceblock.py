@@ -88,9 +88,9 @@ class PythonBlock(verb_required_block(True, payload=True, parameter=True)):
     def process(self, ctx: Context):
         dec = ctx.verb.declaration.lower()
         if dec == "contains":
-            return str(bool(ctx.verb.parameter in ctx.verb.payload.split())).lower()
+            return str(ctx.verb.parameter in ctx.verb.payload.split()).lower()
         elif dec == "in":
-            return str(bool(ctx.verb.parameter in ctx.verb.payload)).lower()
+            return str(ctx.verb.parameter in ctx.verb.payload).lower()
         else:
             try:
                 return str(ctx.verb.payload.strip().split().index(ctx.verb.parameter))

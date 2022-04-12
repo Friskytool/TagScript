@@ -44,8 +44,9 @@ def add_field(embed: Embed, _: str, payload: str):
         inline = implicit_bool(_inline)
         if inline is None:
             raise EmbedParseError(
-                f"`inline` argument for `add_field` is not a boolean value (_inline)"
+                "`inline` argument for `add_field` is not a boolean value (_inline)"
             )
+
     except ValueError:
         try:
             name, value = helper_split(payload, 2)

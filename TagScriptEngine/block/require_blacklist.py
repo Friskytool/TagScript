@@ -30,8 +30,7 @@ class RequireBlock(verb_required_block(True, parameter=True)):
     ACCEPTED_NAMES = ("require", "whitelist")
 
     def process(self, ctx: Context) -> Optional[str]:
-        actions = ctx.response.actions.get("requires")
-        if actions:
+        if actions := ctx.response.actions.get("requires"):
             return None
         ctx.response.actions["requires"] = {
             "items": [i.strip() for i in ctx.verb.parameter.split(",")],
@@ -64,8 +63,7 @@ class BlacklistBlock(verb_required_block(True, parameter=True)):
     ACCEPTED_NAMES = ("blacklist",)
 
     def process(self, ctx: Context) -> Optional[str]:
-        actions = ctx.response.actions.get("blacklist")
-        if actions:
+        if actions := ctx.response.actions.get("blacklist"):
             return None
         ctx.response.actions["blacklist"] = {
             "items": [i.strip() for i in ctx.verb.parameter.split(",")],

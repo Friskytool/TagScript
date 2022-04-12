@@ -35,10 +35,10 @@ class TestVerbFunctionality(unittest.TestCase):
             print("Error from '" + string + "'")
             print("Seen:")
             for item in seen_outcomes:
-                print("> " + str(item))
+                print(f"> {str(item)}")
             print("Expected: ")
             for item in unique_outcomes:
-                print(">> " + str(item))
+                print(f">> {str(item)}")
 
         return result
 

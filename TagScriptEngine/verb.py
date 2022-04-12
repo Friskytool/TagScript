@@ -66,7 +66,7 @@ class Verb:
         if self.parameter is not None:
             response += f".{self.parameter}" if self.dot_parameter else f"({self.parameter})"
         if self.payload is not None:
-            response += ":" + self.payload
+            response += f":{self.payload}"
         return response + "}"
 
     def __repr__(self):
@@ -99,8 +99,7 @@ class Verb:
                 return
             elif parse_parameter(i, v):
                 return
-        else:
-            self.set_payload()
+        self.set_payload()
 
     def _parse_paranthesis_parameter(self, i: int, v: str) -> bool:
         if v == "(":

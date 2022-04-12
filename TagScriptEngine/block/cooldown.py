@@ -80,8 +80,7 @@ class CooldownBlock(verb_required_block(True, payload=True, parameter=True)):
 
         current = time.time()
         bucket = cooldown.get_bucket(key, current)
-        retry_after = bucket.update_rate_limit(current)
-        if retry_after:
+        if retry_after := bucket.update_rate_limit(current):
             retry_after = round(retry_after, 2)
             if message:
                 message = message.replace("{key}", str(key)).replace(

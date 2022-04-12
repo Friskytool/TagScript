@@ -6,7 +6,7 @@ class IntAdapter(Adapter):
     __slots__ = ("integer",)
 
     def __init__(self, integer: int):
-        self.integer: int = int(integer)
+        self.integer: int = integer
 
     def __repr__(self):
         return f"<{type(self).__qualname__} integer={repr(self.integer)}>"

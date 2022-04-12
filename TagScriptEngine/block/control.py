@@ -11,10 +11,7 @@ def parse_into_output(payload: str, result: Optional[bool]) -> Optional[str]:
     try:
         output = helper_split(payload, False)
         if output != None and len(output) == 2:
-            if result:
-                return output[0]
-            else:
-                return output[1]
+            return output[0] if result else output[1]
         elif result:
             return payload
         else:

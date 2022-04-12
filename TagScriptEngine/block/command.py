@@ -34,8 +34,7 @@ class CommandBlock(verb_required_block(True, payload=True)):
 
     def process(self, ctx: Context) -> Optional[str]:
         command = ctx.verb.payload.strip()
-        actions = ctx.response.actions.get("commands")
-        if actions:
+        if actions := ctx.response.actions.get("commands"):
             if len(actions) >= self.limit:
                 return f"`COMMAND LIMIT REACHED ({self.limit})`"
         else:
